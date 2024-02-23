@@ -1,3 +1,7 @@
+import mes from "./service/checkdate.js"; 
+import addTransactionList from './service/addTransactionList.js'
+import updateBalanceAmount from './service/updateBalanceAmount.js'
+
 const transactionUL = document.querySelector('#transactions');
 const balancelDisplay = document.querySelector('#balance');
 const incomeDisplay = document.querySelector('#money-plus');
@@ -5,50 +9,114 @@ const expanseDisplay = document.querySelector('#money-minus');
 const form = document.querySelector('#form');
 const inputTransactionName = document.querySelector('#text');
 const inputTransactionAmount = document.querySelector('#amount')
+const inputTransactionsMonth = document.querySelector('#transactionsMonth')
+
+
+
 
 
 const localStorageTransactions = JSON.parse(localStorage.getItem('transactions'));
 
+
+
 let transactions = localStorage.getItem('transactions') !== null ? localStorageTransactions : []
 
+
+
+
+
+let testeList = [
+    {
+        'mes':'fev',
+        'value': [
+            {'id': 788, 'name': "cartão credito", 'amount': 20}
+        ]
+    },
+    {
+        'mes':'jan',
+        'value': [
+            {'id': 759, 'name': "cartão credito", 'amount': 12}
+        ]
+    },
+    
+]
+
+
 const transactionRemove = ID =>{
-    transactions = transactions.filter( transaction => transaction.id != ID);
+    const index = filterMonthAdd()
+    const transactionFilterMonth = transactions[index].value.filter( transaction => transaction.id != ID);
+
+    transactions[index].value = transactionFilterMonth;
+    
     init();
-    updateLocalStorage()
-}
-
-const addTransactionList = transactions =>{
-    const operator  =  transactions.amount < 0 ? '-' : '+';
-    const CSSclass = transactions.amount < 0 ? 'minus' : 'plus';
-    const amountWithoutOperator = Math.abs(transactions.amount);
-    const li = document.createElement('li')
-    li.classList.add(CSSclass)
-
-    li.innerHTML = `${transactions.name} <span>${operator}R$${amountWithoutOperator}</span><button class="delete-btn" onClick="transactionRemove(${transactions.id})">x</button>`
-    
-    transactionUL.append(li)
+    updateLocalStorage();
 }
 
 
-const updateBalanceAmount = () =>{
-    const transactionsAmounts = transactions.map( transaction => transaction.amount);
-    const total = transactionsAmounts.reduce((acumulator, transaction) => acumulator + transaction, 0).toFixed(2);
-    const income = transactionsAmounts.filter(item => item > 0).reduce((acumulator,value) => acumulator + value , 0).toFixed(2);
-    const expanse = Math.abs(transactionsAmounts.filter(item => item <0).reduce( (acumulator,value) => acumulator + value, 0).toFixed(2));
+const checkMonthExists = () =>{   
     
-    balancelDisplay.textContent = `RS ${total}`
-    incomeDisplay.textContent = `R$ ${income}`;
-    expanseDisplay.textContent = `R$ ${expanse}`;
+
+    const countMonth = transactions.filter( transaction => transaction.mes == mes)
+
+
+    if (countMonth.length == 0){
+        //criar novo mes no array
+  
+        transactions.unshift( {'mes' : mes, 'value':[]})
+
+        hendleSelectionMonths()
+
+        return
+    }
+
+    // entao so criar os options
+
+    hendleSelectionMonths()
+    
+    
+    return
+
     
 }
+
+
+const hendleSelectionMonths = () =>{
+
+    
+
+    transactions.forEach( transaction => {
+
+        const options = document.createElement('option');
+        options.value = `${transaction.mes}` 
+        options.textContent = `${transaction.mes}`;
+        inputTransactionsMonth.append(options)
+    })
+    
+}
+
+
+function filterMonthAdd () {
+
+    const indexMonth = transactions.findIndex((element) => element.mes == inputTransactionsMonth.options[inputTransactionsMonth.selectedIndex].value)
+    return indexMonth
+}
+
+
+inputTransactionsMonth.addEventListener('change', function(e){
+    init()
+});
+
 
 const init = () =>{
-    transactionUL.innerHTML = "";
-    transactions.forEach(addTransactionList)
-    updateBalanceAmount();
-}
 
-init();
+    transactionUL.innerHTML = "";
+    
+    const index = filterMonthAdd();
+
+    updateBalanceAmount(transactions[index]);
+    transactions[index].value.forEach(addTransactionList);
+
+}
 
 const updateLocalStorage = () => { localStorage.setItem('transactions', JSON.stringify(transactions))}
 
@@ -57,6 +125,7 @@ const generateID = () => Math.round(Math.random()*1000);
 const formSubmit = e => {
     e.preventDefault();
 
+    const index = filterMonthAdd();
     const transactionName = inputTransactionName.value.trim();
     const transactionAmount = inputTransactionAmount.value.trim();
     if(transactionName === '' || transactionAmount === ''){
@@ -66,7 +135,8 @@ const formSubmit = e => {
 
     const transaction = {id: generateID(), name : transactionName, amount : Number(transactionAmount)};
 
-    transactions.push(transaction);
+    transactions[index].value.push(transaction);
+
     init()
     updateLocalStorage();
 
@@ -76,3 +146,30 @@ const formSubmit = e => {
 }
 
 form.addEventListener('submit', formSubmit)
+
+
+
+
+
+
+
+
+
+// windowns load 
+
+
+
+document.addEventListener('DOMContentLoaded', ()=>{
+    
+    checkMonthExists();
+    
+    init();
+})
+
+window.document.addEventListener('click', e =>{
+    
+    if(e.target.className == 'delete-btn'){
+        transactionRemove(e.target.dataset.indexId)
+    }
+    console.log();
+})

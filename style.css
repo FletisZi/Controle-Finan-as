@@ -150,3 +150,16 @@ input[type='number'] {
 .transactions li:hover .delete-btn {
   opacity: 1;
 }
+
+.transactionsMonth {
+  background-color: #fff;
+  box-shadow: var(--box-shadow);
+  color: #333;
+  display: flex;
+  justify-content: space-between;
+  position: relative;
+  padding: 10px;
+  margin: 10px 0;
+  font-family: 'Lato', sans-serif;
+  min-width: 210px;
+}
